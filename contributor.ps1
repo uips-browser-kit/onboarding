@@ -1,16 +1,18 @@
 # contributor.ps1 — onboarding for contributors
+# Requires UIPS_BROWSER_KIT_ROOT to be set.
 
 . "$PSScriptRoot/shared.ps1"
 
 $org = "uips-browser-kit"
 $repos = @("testproject", "testdata", "docs", "playground", "exploration", "slides")
 
-Write-Host "Cloning contributor repos..."
+Write-Host "Cloning contributor repos into $env:UIPS_BROWSER_KIT_ROOT ..."
 foreach ($repo in $repos) {
-    if (-not (Test-Path $repo)) {
-        gh repo clone "$org/$repo"
+    $target = Join-Path $env:UIPS_BROWSER_KIT_ROOT $repo
+    if (-not (Test-Path $target)) {
+        gh repo clone "$org/$repo" $target
     } else {
-        Write-Host "  $repo already cloned, skipping."
+        Write-Host "  $repo already exists, skipping."
     }
 }
 
