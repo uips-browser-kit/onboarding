@@ -8,25 +8,17 @@ $ErrorActionPreference = 'Stop'
 
 if (-not $env:UIPS_BROWSER_KIT_ROOT) {
     throw "UIPS_BROWSER_KIT_ROOT is not set. " +
-          "Set it to your workspace root before running onboarding scripts. " +
-          "Example: `$env:UIPS_BROWSER_KIT_ROOT = 'D:\work\uips-browser-kit'"
+          "Set it to your workspace root (e.g. `$env:UIPS_BROWSER_KIT_ROOT = 'D:\work\uips-browser-kit') " +
+          "before running onboarding scripts."
 }
 $env:UV_PROJECT_ENVIRONMENT = "$env:UIPS_BROWSER_KIT_ROOT\.venv"
 
-function Test-Command($name) {
-    if (-not (Get-Command $name -ErrorAction SilentlyContinue)) {
-        throw "Required tool not found: $name. Please install it and re-run."
-    }
-}
+Import-Module (Join-Path $PSScriptRoot 'Onboarding/Onboarding.psd1') -Force
 
 Write-Host "Workspace root: $env:UIPS_BROWSER_KIT_ROOT"
 Write-Host "Checking prerequisites..."
-Test-Command git
-Test-Command gh
-Test-Command uv
-Test-Command just
-
-Write-Host "Verifying gh authentication..."
-gh auth status
+# TA_PTC_002/003: Windows 10 or 11  TA_PTC_004: git  TA_PTC_008: just  TA_PTC_010: uv  TA_PTC_011: gh
+Test-OnboardingSoftware `
+    -Ids @('TA_PTC_002', 'TA_PTC_003', 'TA_PTC_004', 'TA_PTC_008', 'TA_PTC_010', 'TA_PTC_011')
 
 Write-Host "All prerequisite checks passed."
