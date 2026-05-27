@@ -1,4 +1,5 @@
 # maintainer.ps1 — onboarding for maintainers
+# Requires UIPS_BROWSER_KIT_ROOT to be set.
 
 . "$PSScriptRoot/shared.ps1"
 
@@ -6,19 +7,23 @@ $org = "uips-browser-kit"
 $repos = @("library", "rules", "snippets", "skills", "testproject", "testdata",
            "testharness-webapps", "docs", "playground", "exploration", "org")
 
-Write-Host "Cloning maintainer repos..."
+Write-Host "Cloning maintainer repos into $env:UIPS_BROWSER_KIT_ROOT ..."
 foreach ($repo in $repos) {
-    if (-not (Test-Path $repo)) {
-        gh repo clone "$org/$repo"
+    $target = Join-Path $env:UIPS_BROWSER_KIT_ROOT $repo
+    if (-not (Test-Path $target)) {
+        gh repo clone "$org/$repo" $target
     } else {
-        Write-Host "  $repo already cloned, skipping."
+        Write-Host "  $repo already exists, skipping."
     }
 }
 
-Write-Host "Configuring shared venv..."
-uv venv .venv
+Write-Host "Creating shared venv at $env:UV_PROJECT_ENVIRONMENT ..."
+if (-not (Test-Path $env:UV_PROJECT_ENVIRONMENT)) {
+    uv venv $env:UV_PROJECT_ENVIRONMENT
+} else {
+    Write-Host "  venv already exists, skipping."
+}
 
 Write-Host "Maintainer onboarding complete."
 Write-Host "Next steps:"
-Write-Host "  1. Set UV_PROJECT_ENVIRONMENT to the shared .venv path"
-Write-Host "  2. Run 'just install' in each package repo"
+Write-Host "  1. Run 'just install' in each package repo"
