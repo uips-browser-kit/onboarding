@@ -5,7 +5,7 @@
     Description       = 'Onboarding prerequisites checker for uips-browser-kit'
     PowerShellVersion = '7.0'
     RootModule        = 'Onboarding.psm1'
-    FunctionsToExport = @('Test-OnboardingSoftware')
+    FunctionsToExport = @('Test-OnboardingSoftware', 'Test-OnboardingHostsFile')
     CmdletsToExport   = @()
     VariablesToExport = @()
     AliasesToExport   = @()

@@ -4,6 +4,80 @@ BeforeAll {
     Import-Module (Join-Path $PSScriptRoot '..' 'Onboarding.psd1') -Force
 }
 
+Describe 'Test-OnboardingHostEntry' {
+    It 'returns true when the entry is present with spaces' {
+        InModuleScope Onboarding {
+            Test-OnboardingHostEntry -Hostname 'harness.local' -HostsContent @('127.0.0.1  harness.local') |
+                Should -BeTrue
+        }
+    }
+
+    It 'returns true when the entry uses a tab separator' {
+        InModuleScope Onboarding {
+            Test-OnboardingHostEntry -Hostname 'harness.local' -HostsContent @("127.0.0.1`tharness.local") |
+                Should -BeTrue
+        }
+    }
+
+    It 'returns false when the entry is absent' {
+        InModuleScope Onboarding {
+            Test-OnboardingHostEntry -Hostname 'harness.local' -HostsContent @('127.0.0.1  other.local') |
+                Should -BeFalse
+        }
+    }
+
+    It 'does not match a hostname that is a prefix of another' {
+        InModuleScope Onboarding {
+            Test-OnboardingHostEntry -Hostname 'harness.local' -HostsContent @('127.0.0.1  harness.local.extra') |
+                Should -BeFalse
+        }
+    }
+
+    It 'does not match when the IP is not 127.0.0.1' {
+        InModuleScope Onboarding {
+            Test-OnboardingHostEntry -Hostname 'harness.local' -HostsContent @('10.0.0.1  harness.local') |
+                Should -BeFalse
+        }
+    }
+}
+
+Describe 'Test-OnboardingHostsFile' {
+    Context 'all entries present' {
+        BeforeEach {
+            Mock -ModuleName Onboarding Get-Content {
+                @('127.0.0.1  harness.local', '127.0.0.1  idp.local')
+            }
+        }
+
+        It 'does not throw when all hostnames are found' {
+            { Test-OnboardingHostsFile -Hostnames @('harness.local', 'idp.local') } | Should -Not -Throw
+        }
+    }
+
+    Context 'missing entries' {
+        BeforeEach {
+            Mock -ModuleName Onboarding Get-Content {
+                @('127.0.0.1  harness.local')
+            }
+        }
+
+        It 'throws when one hostname is missing' {
+            { Test-OnboardingHostsFile -Hostnames @('harness.local', 'idp.local') } | Should -Throw
+        }
+
+        It 'includes all missing hostnames in the error message' {
+            Mock -ModuleName Onboarding Get-Content { @('# no matching entries') }
+            { Test-OnboardingHostsFile -Hostnames @('harness.local', 'idp.local') } |
+                Should -Throw -ExpectedMessage '*harness.local*'
+        }
+
+        It 'includes the hosts file path in the error message' {
+            { Test-OnboardingHostsFile -Hostnames @('idp.local') -HostsPath 'C:\Windows\System32\drivers\etc\hosts' } |
+                Should -Throw -ExpectedMessage '*C:\Windows\System32\drivers\etc\hosts*'
+        }
+    }
+}
+
 Describe 'Test-OnboardingCommand' {
     It 'does not throw when the command exists on PATH' {
         InModuleScope Onboarding {
