@@ -2,9 +2,10 @@ function Test-OnboardingHostEntry {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][string]$Hostname,
-        [Parameter(Mandatory)][string[]]$HostsContent
+        [Parameter(Mandatory)][string]$HostsContent
     )
 
-    $pattern = "^\s*127\.0\.0\.1\s+$([regex]::Escape($Hostname))(\s|$)"
-    return [bool]($HostsContent | Where-Object { $_ -match $pattern })
+    # (?m) makes ^ and $ match per line within the raw file string
+    $pattern = "(?m)^\s*127\.0\.0\.1\s+$([regex]::Escape($Hostname))\s*$"
+    return $HostsContent -match $pattern
 }

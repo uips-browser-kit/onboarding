@@ -6,7 +6,7 @@ function Test-OnboardingHostsFile {
     )
 
     Write-Host "Checking hosts file ($HostsPath)..."
-    $content = @(Get-Content $HostsPath -ErrorAction Stop)
+    $content = (Get-Content $HostsPath -Raw -ErrorAction Stop) ?? ''
     $missing = [System.Collections.Generic.List[string]]::new()
 
     foreach ($hostname in $Hostnames) {

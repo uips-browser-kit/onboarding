@@ -7,35 +7,43 @@ BeforeAll {
 Describe 'Test-OnboardingHostEntry' {
     It 'returns true when the entry is present with spaces' {
         InModuleScope Onboarding {
-            Test-OnboardingHostEntry -Hostname 'harness.local' -HostsContent @('127.0.0.1  harness.local') |
+            Test-OnboardingHostEntry -Hostname 'harness.local' -HostsContent "127.0.0.1  harness.local" |
                 Should -BeTrue
         }
     }
 
     It 'returns true when the entry uses a tab separator' {
         InModuleScope Onboarding {
-            Test-OnboardingHostEntry -Hostname 'harness.local' -HostsContent @("127.0.0.1`tharness.local") |
+            Test-OnboardingHostEntry -Hostname 'harness.local' -HostsContent "127.0.0.1`tharness.local" |
+                Should -BeTrue
+        }
+    }
+
+    It 'returns true when the entry is one of many lines' {
+        InModuleScope Onboarding {
+            $content = "# comment`n127.0.0.1  other.local`n127.0.0.1  harness.local`n127.0.0.1  idp.local"
+            Test-OnboardingHostEntry -Hostname 'harness.local' -HostsContent $content |
                 Should -BeTrue
         }
     }
 
     It 'returns false when the entry is absent' {
         InModuleScope Onboarding {
-            Test-OnboardingHostEntry -Hostname 'harness.local' -HostsContent @('127.0.0.1  other.local') |
+            Test-OnboardingHostEntry -Hostname 'harness.local' -HostsContent "127.0.0.1  other.local" |
                 Should -BeFalse
         }
     }
 
     It 'does not match a hostname that is a prefix of another' {
         InModuleScope Onboarding {
-            Test-OnboardingHostEntry -Hostname 'harness.local' -HostsContent @('127.0.0.1  harness.local.extra') |
+            Test-OnboardingHostEntry -Hostname 'harness.local' -HostsContent "127.0.0.1  harness.local.extra" |
                 Should -BeFalse
         }
     }
 
     It 'does not match when the IP is not 127.0.0.1' {
         InModuleScope Onboarding {
-            Test-OnboardingHostEntry -Hostname 'harness.local' -HostsContent @('10.0.0.1  harness.local') |
+            Test-OnboardingHostEntry -Hostname 'harness.local' -HostsContent "10.0.0.1  harness.local" |
                 Should -BeFalse
         }
     }
@@ -45,7 +53,7 @@ Describe 'Test-OnboardingHostsFile' {
     Context 'all entries present' {
         BeforeEach {
             Mock -ModuleName Onboarding Get-Content {
-                @('127.0.0.1  harness.local', '127.0.0.1  idp.local')
+                "127.0.0.1  harness.local`n127.0.0.1  idp.local"
             }
         }
 
@@ -57,7 +65,7 @@ Describe 'Test-OnboardingHostsFile' {
     Context 'missing entries' {
         BeforeEach {
             Mock -ModuleName Onboarding Get-Content {
-                @('127.0.0.1  harness.local')
+                "127.0.0.1  harness.local"
             }
         }
 
@@ -66,7 +74,7 @@ Describe 'Test-OnboardingHostsFile' {
         }
 
         It 'includes all missing hostnames in the error message' {
-            Mock -ModuleName Onboarding Get-Content { @('# no matching entries') }
+            Mock -ModuleName Onboarding Get-Content { "# no matching entries" }
             { Test-OnboardingHostsFile -Hostnames @('harness.local', 'idp.local') } |
                 Should -Throw -ExpectedMessage '*harness.local*'
         }
